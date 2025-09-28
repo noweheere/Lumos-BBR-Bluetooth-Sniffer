@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumos BBR Bluetooth Sniffer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            border-radius: 10px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            background-color: #2a2a2a;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .device-list {
+            display: grid;
+            gap: 15px;
+        }
+        .device {
+            background-color: #3a3a3a;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+        .device.lumos {
+            border-left-color: #ff6b35;
+            background-color: #4a2a2a;
+        }
+        .device-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .device-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .device-address {
+            font-family: monospace;
+            color: #aaa;
+        }
+        .rssi {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .rssi.strong { background-color: #2d5a2d; }
+        .rssi.medium { background-color: #5a5a2d; }
+        .rssi.weak { background-color: #5a2d2d; }
+        .device-data {
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #ccc;
+            margin-top: 8px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary {
+            background-color: #ff6b35;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #e55a2b;
+        }
+        .btn-secondary {
+            background-color: #666;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #777;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background-color: #3a3a3a;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        .signal-log {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+        .signal-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .signal-entry.lumos {
+            background-color: #2a1a1a;
+            border-left: 3px solid #ff6b35;
+        }
+        .timestamp {
+            color: #888;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #4CAF50; }
+        .status-inactive { background-color: #f44336; }
+        .lumos-badge {
+            background-color: #ff6b35;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚴 Lumos BBR Bluetooth Sniffer</h1>
+            <p>ESP32 BLE Scanner for Lumos Matrix Helmet Analysis</p>
+        </div>
+
+        <div class="section">
+            <div class="controls">
+                <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn btn-secondary" onclick="toggleAutoRefresh()">⏱️ Auto Refresh: <span id="autoRefreshStatus">ON</span></button>
+                <button class="btn btn-secondary" onclick="clearLogs()">🗑️ Clear Logs</button>
+                <button class="btn btn-secondary" onclick="exportData()">💾 Export Data</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="totalDevices">0</div>
+                    <div class="stat-label">Total Devices</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="lumosDevices">0</div>
+                    <div class="stat-label">Lumos Devices</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="signalCount">0</div>
+                    <div class="stat-label">Total Signals</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="scanStatus">
+                        <span class="status-indicator status-active"></span>
+                        Active
+                    </div>
+                    <div class="stat-label">Scanner Status</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📡 Detected Devices</h2>
+            <div id="deviceList" class="device-list">
+                <p style="color: #888;">Loading devices...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Signal Analysis</h2>
+            <div id="signalLog" class="signal-log">
+                <p style="color: #888;">Loading signal data...</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>ℹ️ System Information</h2>
+            <p><strong>WiFi Network:</strong> Lumos-BBR-Sniffer</p>
+            <p><strong>Device IP:</strong> <span id="deviceIP">192.168.4.1</span></p>
+            <p><strong>Last Update:</strong> <span id="lastUpdate">-</span></p>
+            <p><strong>Uptime:</strong> <span id="uptime">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = true;
+        let refreshInterval;
+
+        function updateTimestamp() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        function getRSSIClass(rssi) {
+            if (rssi > -50) return 'strong';
+            if (rssi > -70) return 'medium';
+            return 'weak';
+        }
+
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString();
+        }
+
+        async function loadDevices() {
+            try {
+                const response = await fetch('/api/devices');
+                const devices = await response.json();
+                
+                const deviceList = document.getElementById('deviceList');
+                let totalDevices = devices.length;
+                let lumosDevices = devices.filter(d => d.isLumos).length;
+                
+                if (devices.length === 0) {
+                    deviceList.innerHTML = '<p style="color: #888;">No devices detected yet.</p>';
+                } else {
+                    deviceList.innerHTML = devices.map(device => `
+                        <div class="device${device.isLumos ? ' lumos' : ''}">
+                            <div class="device-header">
+                                <div>
+                                    <div class="device-name">
+                                        ${device.name || 'Unknown Device'}
+                                        ${device.isLumos ? '<span class="lumos-badge">LUMOS</span>' : ''}
+                                    </div>
+                                    <div class="device-address">${device.address}</div>
+                                </div>
+                                <div class="rssi ${getRSSIClass(device.rssi)}">${device.rssi} dBm</div>
+                            </div>
+                            ${device.data ? `<div class="device-data">Data: ${device.data}</div>` : ''}
+                            <div style="font-size: 0.8em; color: #888; margin-top: 8px;">
+                                Last seen: ${formatTimestamp(device.lastSeen)} | 
+                                Signals: ${device.signalCount}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('totalDevices').textContent = totalDevices;
+                document.getElementById('lumosDevices').textContent = lumosDevices;
+                
+            } catch (error) {
+                console.error('Error loading devices:', error);
+                document.getElementById('deviceList').innerHTML = '<p style="color: #f44;">Error loading devices</p>';
+            }
+        }
+
+        async function loadSignals() {
+            try {
+                const response = await fetch('/api/signals');
+                const signals = await response.json();
+                
+                const signalLog = document.getElementById('signalLog');
+                
+                if (signals.length === 0) {
+                    signalLog.innerHTML = '<p style="color: #888;">No signals captured yet.</p>';
+                } else {
+                    signalLog.innerHTML = signals.slice(-50).reverse().map(signal => `
+                        <div class="signal-entry${signal.pattern !== 'unknown' ? ' lumos' : ''}">
+                            <span class="timestamp">${formatTimestamp(signal.timestamp)}</span> 
+                            <strong>${signal.address}</strong> 
+                            RSSI: ${signal.rssi}dBm 
+                            Pattern: <em>${signal.pattern}</em>
+                            ${signal.data ? ` Data: ${signal.data}` : ''}
+                        </div>
+                    `).join('');
+                }
+                
+                document.getElementById('signalCount').textContent = signals.length;
+                
+            } catch (error) {
+                console.error('Error loading signals:', error);
+                document.getElementById('signalLog').innerHTML = '<p style="color: #f44;">Error loading signals</p>';
+            }
+        }
+
+        async function refreshData() {
+            updateTimestamp();
+            await Promise.all([loadDevices(), loadSignals()]);
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const statusElement = document.getElementById('autoRefreshStatus');
+            
+            if (autoRefresh) {
+                statusElement.textContent = 'ON';
+                startAutoRefresh();
+            } else {
+                statusElement.textContent = 'OFF';
+                clearInterval(refreshInterval);
+            }
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(refreshData, 5000); // 5 seconds
+        }
+
+        function clearLogs() {
+            if (confirm('Clear all signal logs? This action cannot be undone.')) {
+                document.getElementById('signalLog').innerHTML = '<p style="color: #888;">Logs cleared.</p>';
+            }
+        }
+
+        function exportData() {
+            // This would implement data export functionality
+            alert('Export functionality coming soon!');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            if (autoRefresh) {
+                startAutoRefresh();
+            }
+        });
+    </script>
+</body>
+</html>
