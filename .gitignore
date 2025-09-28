@@ -1,0 +1,59 @@
+# Arduino/ESP32 Build Files
+build/
+*.bin
+*.elf
+*.map
+
+# IDE Files
+.vscode/
+.idea/
+*.code-workspace
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup Files
+*~
+*.bak
+*.tmp
+*.swp
+
+# Log Files
+*.log
+
+# Documentation Build
+docs/_build/
+docs/.doctrees/
+
+# Python Files (if using tools)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Temporary Files
+tmp/
+temp/
+
+# Board Manager Cache
+.arduino15/
+
+# SPIFFS Build Files
+spiffs.bin
+littlefs.bin
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Local Configuration (don't commit sensitive data)
+config_local.h
+secrets.h
+wifi_credentials.h

@@ -1,0 +1,33 @@
+# Required Libraries for Lumos BLE Sniffer
+# Install these through Arduino IDE Library Manager
+
+# Core ESP32 BLE Library (included with ESP32 board package)
+# - BLEDevice
+# - BLEUtils  
+# - BLEScan
+# - BLEAdvertisedDevice
+
+# Web Server Libraries
+ESPAsyncWebServer@1.2.3
+AsyncTCP@1.1.1
+
+# JSON Handling
+ArduinoJson@6.21.3
+
+# File System (included with ESP32 board package)
+# - SPIFFS
+# - FS
+
+# WiFi (included with ESP32 board package)
+# - WiFi
+
+# Installation Instructions:
+# 1. Open Arduino IDE
+# 2. Go to Tools -> Manage Libraries
+# 3. Search for each library name
+# 4. Install the specified version or latest stable version
+# 5. Restart Arduino IDE
+
+# Board Package Required:
+# ESP32 by Espressif Systems (version 2.0.0 or later)
+# Add board manager URL: https://dl.espressif.com/dl/package_esp32_index.json
