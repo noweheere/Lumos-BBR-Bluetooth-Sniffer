@@ -1,0 +1,236 @@
+LUMOS BBR BLUETOOTH SNIFFER - BASIC WIRING DIAGRAM
+=================================================
+
+SYSTEM OVERVIEW:
+┌─────────────────┐    BLE     ┌──────────────────┐   ESP-NOW   ┌─────────────────┐
+│  Lumos Matrix   │──────────► │  Sniffer ESP32   │────────────►│  Trailer ESP32  │
+│     Helmet      │            │                  │             │                 │
+└─────────────────┘            └──────────────────┘             └─────────────────┘
+                                        │                                 │
+                                   ┌────▼────┐                      ┌────▼────┐
+                                   │ Status  │                      │ Trailer │
+                                   │   LED   │                      │ Lights  │
+                                   └─────────┘                      └─────────┘
+
+ESP32 SNIFFER UNIT - BASIC CONNECTIONS:
+=======================================
+
+     ESP32-WROOM-32 DevKit
+     ┌─────────────────────┐
+     │                     │
+  3V3├○                   ○┤VIN (5V input)
+   EN├○                   ○┤GND
+   36├○                   ○┤23 ──────● Status Relay (optional)
+   39├○                   ○┤22
+   34├○                   ○┤21
+   35├○                   ○┤19
+   32├○                   ○┤18
+   33├○                   ○┤5
+   25├○                   ○┤17
+   26├○                   ○┤16
+   27├○                   ○┤4
+   14├○                   ○┤0 ───────● BOOT Button
+   12├○                   ○┤2 ───────● Built-in LED
+  GND├○                   ○┤15
+   13├○                   ○┤8
+    9├○                   ○┤7
+   10├○                   ○┤6
+   11├○                   ○┤10
+     └─────────────────────┘
+
+Power Input: 5V USB or 12V-to-5V converter
+Status LED: GPIO2 (built-in)
+Optional Relay: GPIO23 (for local signaling)
+
+ESP32 TRAILER UNIT - DETAILED CONNECTIONS:
+==========================================
+
+     ESP32-WROOM-32 DevKit
+     ┌─────────────────────┐
+     │                     │
+  3V3├○                   ○┤VIN ──● +5V (from 12V converter)
+   EN├○                   ○┤GND ──● Ground
+   36├○                   ○┤23 ──────● Right Hazard
+   39├○                   ○┤22 ──────● Left Hazard  
+   34├○                   ○┤21 ──────● Brake Lights
+   35├○                   ○┤19 ──────● Right Turn
+   32├○                   ○┤18 ──────● Left Turn
+   33├○                   ○┤5
+   25├○                   ○┤17
+   26├○                   ○┤16
+   27├○                   ○┤4 ───────● Emergency Stop
+   14├○                   ○┤0 ───────● BOOT Button
+   12├○                   ○┤2 ───────● Status LED
+  GND├○                   ○┤15
+   13├○                   ○┤8
+    9├○                   ○┤7
+   10├○                   ○┤6
+   11├○                   ○┤25 ──────● Power Relay
+     └─────────────────────┘
+
+MOSFET DRIVER CIRCUIT (FOR EACH OUTPUT):
+========================================
+
+ESP32 GPIO ────┐
+               │
+             ┌─▼─┐
+             │2K2│ Gate Resistor
+             └─┬─┘
+               │
+        ┌──────▼──────┐ IRLZ44N MOSFET
+        │      G      │
+        │             │
+  ┌─────┤ D         S ├─────┐
+  │     └─────────────┘     │
+  │                         │
+┌─▼─┐                     ┌─▼─┐
+│   │ LED Strip            │10K│ Pull-down
+│12V│ or Lights            └─┬─┘
+└─┬─┘                       │
+  │                       ──┴──
+  ▼                        GND
+ +12V Vehicle Power
+
+Components per channel:
+- 1x IRLZ44N N-Channel MOSFET (or equivalent)
+- 1x 2.2K ohm resistor (gate)
+- 1x 10K ohm resistor (pull-down)
+
+POWER DISTRIBUTION:
+==================
+
+Vehicle 12V ─────● Fuse (15A) ─────┬─────● Main Power Switch
+                                   │
+                        ┌──────────┼──────────┐
+                        │                     │
+                  ┌─────▼─────┐         ┌─────▼─────┐
+                  │ 12V to 5V │         │   LED     │
+                  │ Converter │         │ Drivers   │
+                  │  (3A min) │         │ (MOSFETs) │
+                  └─────┬─────┘         └───────────┘
+                        │
+                 ┌──────▼──────┐
+                 │   ESP32s    │
+                 │ (Both units)│
+                 └─────────────┘
+
+COMMUNICATION CONNECTIONS:
+=========================
+
+Wireless (ESP-NOW): No physical connections needed
+- Both ESP32s use built-in WiFi for communication
+- Range: ~50-100 meters in open space
+- Automatic pairing via MAC addresses
+
+Wired Backup (Serial):
+Sniffer ESP32     Trailer ESP32
+     TX ──────────── RX  
+     RX ──────────── TX
+    GND ──────────── GND
+
+LED STRIP CONNECTIONS:
+=====================
+
+For each output channel:
+
+LED Strip ────┐
+              │
+         ┌────▼────┐
+         │ +12V    │ Red wire to vehicle +12V
+         │         │
+         │  LED    │
+         │ Strip   │
+         │         │
+         │ GND     │ Black wire to MOSFET Drain
+         └─────────┘
+
+Current Requirements:
+- Each 1-meter LED strip: ~1-3A @ 12V
+- Total system: 5-8A maximum
+- Use appropriate fuses for each circuit
+
+EMERGENCY STOP CIRCUIT:
+======================
+
+    +5V ──┬── 10K ──┬── ESP32 GPIO4
+          │         │
+        ┌─▼─┐     ┌─▼─┐
+        │   │ N.O │   │ Emergency
+        │   │ SW  │   │ Stop Button
+        └─┬─┘     └───┘
+          │
+        ──┴──
+         GND
+
+Button pressed = GPIO reads LOW = Emergency stop activated
+
+STATUS LED PATTERNS:
+===================
+
+Sniffer ESP32:
+- Solid ON: Scanning active
+- Quick flash: Device detected
+- Slow blink: No devices found
+- Fast blink: Error condition
+
+Trailer ESP32:
+- Solid ON: Connected and receiving commands
+- Slow blink: Waiting for connection
+- Fast blink: Error or emergency stop
+- Off: No power or system fault
+
+INSTALLATION NOTES:
+==================
+
+1. Mount ESP32s in weatherproof enclosures
+2. Use automotive-grade wire (14 AWG minimum for power)
+3. Install inline fuses for all high-current circuits
+4. Secure all connections with heat shrink tubing
+5. Test thoroughly before final installation
+6. Keep antennas away from metal surfaces for best range
+
+TESTING CONNECTIONS:
+===================
+
+Before applying power:
+1. Check all connections with multimeter (continuity)
+2. Verify no shorts between power and ground
+3. Confirm correct polarity on all connections
+4. Test each MOSFET gate voltage (should be 0V when off)
+
+After applying power:
+1. Verify 5V at ESP32 VIN pins
+2. Check 12V at LED strip positive terminals
+3. Test each output with multimeter before connecting LEDs
+4. Monitor current draw during initial testing
+
+TROUBLESHOOTING:
+===============
+
+No Power:
+- Check fuses and main power connections
+- Verify 12V-to-5V converter output
+- Test with multimeter
+
+LEDs Not Working:
+- Check MOSFET gate voltages (3.3V when on, 0V when off)
+- Verify LED strip polarity
+- Test MOSFETs with simple LED and resistor
+
+Communication Issues:
+- Verify MAC addresses in code
+- Check ESP32 power stability
+- Test at shorter distances first
+- Monitor serial output for error messages
+
+For more detailed troubleshooting, see the Testing Guide.
+
+SAFETY WARNINGS:
+===============
+
+⚠️  ALWAYS disconnect power before making connections
+⚠️  Use appropriate fuses for all circuits
+⚠️  Verify polarity before applying power
+⚠️  Test in safe environment before installation
+⚠️  Follow local regulations for vehicle modifications
+⚠️  Provide manual override for safety-critical functions

@@ -1,0 +1,28 @@
+# Required Arduino Libraries for Trailer Relay System
+# Install these libraries through Arduino IDE Library Manager or PlatformIO
+
+# Core ESP32 libraries (included with ESP32 board package)
+# - WiFi
+# - esp_now  
+# - esp_sleep
+
+# JSON processing
+ArduinoJson>=6.19.0
+
+# Additional functionality
+ESP32Time>=2.0.0          # For timestamp management
+Preferences>=1.0.0         # For storing configuration
+AsyncTCP>=1.1.1            # For async network operations
+ESPAsyncWebServer>=1.2.3   # For web configuration interface
+
+# Power management and monitoring
+ESP32AnalogRead>=0.2.1     # Enhanced analog reading for voltage monitoring
+
+# Optional advanced features  
+WebSocketsServer>=2.3.6    # WebSocket support for real-time control
+PubSubClient>=2.8.0        # MQTT support for remote monitoring
+BlynkESP32>=1.2.0          # Blynk integration for mobile control
+
+# Development and debugging
+SerialTransfer>=2.1.2      # Enhanced serial communication
+RemoteDebug>=3.0.5         # Remote debugging over WiFi
